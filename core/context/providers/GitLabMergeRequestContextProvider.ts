@@ -1,6 +1,7 @@
 import { AxiosInstance, AxiosError } from "axios";
 import {BaseContextProvider} from "../index.js";
 import { ContextProviderExtras, ContextItem, ContextProviderDescription } from "../../index.js";
+import { os } from 'os';
 
 interface RemoteBranchInfo {
   branch: string | null;
@@ -61,9 +62,20 @@ const getSubprocess = async (extras: ContextProviderExtras) => {
     .getWorkspaceDirs()
     .then(trimFirstElement);
 
+  const platform = os.platform();
+  let commandPrefix = '';
+
+  if (platform === 'win32') {
+    const driveLetter = workingDir.slice(0, 2)
+    extras.ide
+    .subprocess(driveLetter)
+    commandPrefix = `cd "${workingDir}" && `;;
+  } else {
+    commandPrefix = `cd "${workingDir}"; `;
+  }
   return (command: string) =>
     extras.ide
-      .subprocess(`cd ${workingDir}; ${command}`)
+      .subprocess(`${commandPrefix}${command}`)
       .then(trimFirstElement);
 };
 
